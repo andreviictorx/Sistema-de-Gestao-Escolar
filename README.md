@@ -4,8 +4,7 @@
 SIGESTE é uma aplicação web completa para gestão acadêmica, desenvolvida como um projeto prático para solidificar e demonstrar conhecimentos avançados no ecossistema React. A aplicação permite o gerenciamento completo de Alunos, Turmas, Professores e Disciplinas, além de apresentar um dashboard com métricas visuais.
 
 Acesse o SIGESTE aqui
-
-(Substitua o link acima pela URL do seu projeto após o deploy)
+(https://sistema-de-gestao-escolar.vercel.app/)
 
 ✨ Funcionalidades Principais
 
