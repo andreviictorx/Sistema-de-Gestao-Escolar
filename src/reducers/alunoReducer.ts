@@ -27,7 +27,7 @@ type editAluno = {
 }
 
 export type alunoAction = addAluno | removeAluno | editAluno
-export const alunoReducer = (state: AlunoState, action: alunoAction)=>{
+export const alunoReducer = (state: AlunoState = initialState, action: alunoAction)=>{
     switch(action.type){
         case 'AddAluno':
             const newAluno: Aluno = {
