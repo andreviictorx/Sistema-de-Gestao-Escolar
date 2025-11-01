@@ -22,8 +22,8 @@ type EditProf = {
   type: "EditarProfessor";
   payload: Professor;
 };
-type ProfAction = AddProf | RemoveProf | EditProf;
-export function ProfessorReducer(state: ProfessorState, action: ProfAction) {
+export type ProfAction = AddProf | RemoveProf | EditProf;
+export function ProfessorReducer(state: ProfessorState = initialStateProfessor, action: ProfAction) {
   switch (action.type) {
     case "AdicionarProfessor":
       const newProfessor: Professor = {
