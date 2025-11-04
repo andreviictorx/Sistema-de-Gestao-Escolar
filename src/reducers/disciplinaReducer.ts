@@ -25,8 +25,8 @@ type EditDisciplina = {
     payload: Disciplina
 }
 
-type disciplinaAction = AddDisciplina | RemoverDisciplina | EditDisciplina
-export const disciplinaReducer = (state:DisciplinaState, action:disciplinaAction)=>{
+export type disciplinaAction = AddDisciplina | RemoverDisciplina | EditDisciplina
+export const disciplinaReducer = (state:DisciplinaState = initialStateDisciplina, action:disciplinaAction)=>{
     switch(action.type){    
         case 'AdicionarDisciplina':
             const newDisciplina: Disciplina = {
