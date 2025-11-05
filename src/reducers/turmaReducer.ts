@@ -25,7 +25,7 @@ type editTurma = {
 }
 
 export type turmaAction = AddTurma |removerTurma | editTurma 
-export const turmaReducer = (state:TurmaState, action: turmaAction)=>{
+export const turmaReducer = (state:TurmaState = initialStateTurma, action: turmaAction)=>{
     switch (action.type) {
       case "AddTurma":
         const newTurma: Turma = {
