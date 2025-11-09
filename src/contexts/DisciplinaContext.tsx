@@ -39,6 +39,10 @@ export const DisciplinaContextProvider = ({children}: {children:React.ReactNode}
 
     
     const adicionarDisciplina = (disciplinaData:  Omit<Disciplina, 'id'>)=>{
+        const codigoExists = state.disciplinas.find(disciplina=> disciplina.codigo === disciplinaData.codigo);
+        if(codigoExists){
+            throw new Error('O codigo deve ser unico para cada disciplina. Verifique e tente novamente')
+        }
         dispatch({
             type:'AdicionarDisciplina',
             payload: disciplinaData
@@ -52,6 +56,10 @@ export const DisciplinaContextProvider = ({children}: {children:React.ReactNode}
     }
 
     const editarDisciplina = (disciplinaAtualizada: Disciplina)=>{
+        const codigoExists = state.disciplinas.find(disciplina => disciplina.codigo === disciplinaAtualizada.codigo && disciplina.id !== disciplinaAtualizada.id);
+        if (codigoExists) {
+            throw new Error('O codigo deve ser unico para cada disciplina. Verifique e tente novamente')
+        }
         dispatch({
             type:'EditarDisciplina',
             payload: disciplinaAtualizada

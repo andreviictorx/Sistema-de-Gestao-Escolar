@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect} from "react";
 import Button from "../../components/Button";
 import { useAlunos } from "../../contexts/AlunoContext";
 import { useNavigate, useParams } from "react-router-dom";
@@ -7,6 +7,19 @@ import InputForm from "../../components/InputForm";
 
 import { useTurmas } from "../../contexts/TurmaContext";
 import { ButtonContainer, FormContainer, FormTitle} from "./AlunoForm.styles";
+import {z} from 'zod'
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormWarning } from "../../styles/formstyles";
+
+const alunoFormSchema = z.object({
+    nome: z.string().min(2, 'O nome do aluno é obrigatório'),
+    matricula: z.string().min(1, 'Matricula é obrigatoria'),
+    turma: z.string().min(1, 'Turma é obrigatorio')
+})
+
+type alunoFormData = z.infer<typeof alunoFormSchema>;
+
 
 const AlunoForm = () => {
     const { state: alunoState, adicionarAluno, editarAluno } = useAlunos();
@@ -15,9 +28,15 @@ const AlunoForm = () => {
     const navigate = useNavigate();
     const { alunoId } = useParams<{ alunoId: string }>();
 
-    const [nome, setNome] = useState('');
-    const [matricula, setMatricula] = useState('');
-    const [turma, setTurma] = useState('');
+    const {handleSubmit,register, formState: {errors}, reset, setError} = useForm<alunoFormData>({
+        resolver: zodResolver(alunoFormSchema),
+        defaultValues: {
+            nome:'',
+            matricula:'',
+            turma:''
+        }
+    })
+
 
     const isEditing = alunoId !== undefined;
     const alunoToEdit = isEditing ? alunoState.alunos.find(item => item.id === Number(alunoId)) : null;
@@ -27,26 +46,29 @@ const AlunoForm = () => {
 
     useEffect(() => {
         if (alunoToEdit) {
-            setNome(alunoToEdit.nome);
-            setMatricula(alunoToEdit.matricula);
-            setTurma(alunoToEdit.turma);
+            reset(alunoToEdit)
         }
-    }, [alunoToEdit]);
+    }, [alunoToEdit, reset]);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (isEditing && alunoId) {
-            const alunoAtualizado: Aluno = {
-                id: Number(alunoId),
-                nome,
-                matricula,
-                turma
-            };
-            editarAluno(alunoAtualizado);
-        } else {
-            adicionarAluno({ nome, matricula, turma });
+    const handleSubmitAluno = (data: alunoFormData) => {
+        try{
+            if (isEditing && alunoId) {
+                const alunoAtualizado: Aluno = {
+                    id: Number(alunoId), ...data
+                };
+                editarAluno(alunoAtualizado);
+            } else {
+                adicionarAluno(data);
+            }
+            navigate('/alunos/');
+        }catch(error: any){
+            if(error.message.includes('matricula')){
+                setError('matricula', {type:'manual', message: error.message})
+            }else{
+                console.error('Opa, algo deu errado.', error)
+            }   
         }
-        navigate('/alunos/');
+        
     };
 
     const cancelar = () => {
@@ -54,37 +76,39 @@ const AlunoForm = () => {
     };
 
     return (
-        <FormContainer  onSubmit={handleSubmit}>
+        <FormContainer  onSubmit={handleSubmit(handleSubmitAluno)}>
             <FormTitle>
                 {isEditing ? "Editar Aluno" : "Cadastrar Novo Aluno"}
             </FormTitle>
             {!hasTurmas && (
-                <p className="form-warning">
+                <FormWarning>
                     ⚠️ Nenhuma turma cadastrada. Por favor, crie uma turma primeiro para poder matricular um aluno.
-                </p>
+                </FormWarning>
             )}
+
+            
 
             <fieldset disabled={!hasTurmas}>
                 <InputForm
-                    onChange={(e) => setNome(e.target.value)}
-                    value={nome}
+                    {...register('nome')}
                     placeholder={'Nome do aluno'}
                     label={"Digite o nome do aluno"}
                     type={"text"}
                 />
+                {errors.nome && <FormWarning>{errors.nome.message}</FormWarning>}
                 <InputForm
-                    onChange={(e) => setMatricula(e.target.value)}
-                    value={matricula}
+                    {...register('matricula')}
                     label={'Matricula'}
                     placeholder={"Digite o numero da matricula do aluno"}
                     type={"text"}
                 />
+                {errors.matricula && <FormWarning>{errors.matricula.message}</FormWarning>}
+
                 <div className="form-group">
                     <label htmlFor="turma">Turma</label>
                     <select
                         id="turma"
-                        value={turma}
-                        onChange={(e) => setTurma(e.target.value)}
+                        {...register('turma')}
                         required
                     >
                         <option value="" disabled>Selecione uma turma</option>
@@ -94,6 +118,7 @@ const AlunoForm = () => {
                             </option>
                         ))}
                     </select>
+                    {errors.turma && <FormWarning>{errors.turma.message}</FormWarning>}
                 </div>
                 <ButtonContainer>
                     <Button variant='accent' texto={isEditing ? "Atualizar" : "Salvar"} type={"submit"} />

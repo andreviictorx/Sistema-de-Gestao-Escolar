@@ -1,27 +1,25 @@
+import { forwardRef } from 'react';
 import { FormGroup, Label, StyledInput } from './InputForm.styles';
 
 
-type InputProps = {
+type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   label?: string;
-  value: string;
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  type: string;
-  placeholder: string;
 }
 
-const InputForm = ({ label, value, onChange, type, placeholder }: InputProps) => {
-  return (
-    <FormGroup>
-      {label && <Label>{label}</Label>}
-      <StyledInput
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        required
-      />
-    </FormGroup>
-  );
-};
+const InputForm = forwardRef<HTMLInputElement, InputProps>(
+  ({ label, ...props }, ref) => {
+
+    return (
+      <FormGroup>
+        {label && <Label>{label}</Label>}
+
+        <StyledInput
+          ref={ref}
+          {...props}
+
+        />
+      </FormGroup>
+    )
+  });
 
 export default InputForm;

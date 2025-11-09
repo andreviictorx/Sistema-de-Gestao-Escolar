@@ -1,21 +1,39 @@
 import InputForm from "../../components/InputForm";
 import Button from "../../components/Button";
-import React, { useEffect, useState } from "react";
+import { useEffect} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDisciplinas } from "../../contexts/DisciplinaContext";
 import type { Disciplina } from "../../types";
 import { useTurmas } from "../../contexts/TurmaContext";
 import { FormContainer, FormTitle, FormWarning, ButtonContainer } from "../../styles/formstyles";
+import z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const disciplinaFormSchema = z.object({
+  nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  cargaHoraria: z.string().min(2, 'Deve ter pelo menos 2 caracteres'),
+  codigo: z.string().min(3, 'Codigo deve ter pelo menos 3 caracteres'),
+  turma: z.string().min(1, 'turma é obrigatorio')
+})
+
+type disciplinaFormData = z.infer<typeof disciplinaFormSchema>
 
 const FormDisciplinas = () => {
   const { state, adicionarDisciplina, editarDisciplina } = useDisciplinas();
   const navigate = useNavigate();
   const { disciplinaId } = useParams<{ disciplinaId: string }>();
 
-  const [nome, setNome] = useState('');
-  const [codigo, setCodigo] = useState('');
-  const [cargaHoraria, setCargaHoraria] = useState('');
-  const [turma, setTurma] = useState('');
+  const {handleSubmit, register, formState:{errors}, reset, setError} = useForm<disciplinaFormData>({
+    resolver: zodResolver(disciplinaFormSchema),
+    defaultValues:{
+      nome:'',
+      codigo:'',
+      cargaHoraria:'',
+      turma:''
+    }
+  });
+
   const { state: TurmaState } = useTurmas();
 
   const isDisciplina = disciplinaId !== undefined;
@@ -24,28 +42,27 @@ const FormDisciplinas = () => {
 
   useEffect(() => {
     if (disciplinaToEdit) {
-      setCodigo(disciplinaToEdit.codigo);
-      setNome(disciplinaToEdit.nome);
-      setCargaHoraria(disciplinaToEdit.cargaHoraria);
-      setTurma(disciplinaToEdit.turma);
+      reset(disciplinaToEdit)
     }
-  }, [disciplinaToEdit]);
+  }, [disciplinaToEdit, reset]);
 
-  const handleSubmitDisciplina = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isDisciplina && disciplinaId) {
-      const newDisciplina: Disciplina = {
-        id: Number(disciplinaId),
-        cargaHoraria: cargaHoraria,
-        codigo: codigo,
-        nome: nome,
-        turma: turma
-      };
-      editarDisciplina(newDisciplina);
-    } else {
-      adicionarDisciplina({ nome, cargaHoraria, codigo, turma });
+  const handleSubmitDisciplina = (data: disciplinaFormData) => {
+    try{
+      if (isDisciplina && disciplinaId) {
+        const newDisciplina: Disciplina = {
+          id: Number(disciplinaId), ...data
+        };
+        editarDisciplina(newDisciplina);
+      } else {
+        adicionarDisciplina(data);
+      }
+      navigate('/disciplinas/');
+    }catch(error:any){
+      if(error.message.includes('codigo')){
+        setError('codigo', {type:'manual', message: error.message})
+      }
     }
-    navigate('/disciplinas/');
+
   };
 
   const cancelarDisciplina = () => {
@@ -53,7 +70,7 @@ const FormDisciplinas = () => {
   };
 
   return (
-    <FormContainer onSubmit={handleSubmitDisciplina}>
+    <FormContainer onSubmit={handleSubmit(handleSubmitDisciplina)}>
       <FormTitle>{isDisciplina ? 'Editar Disciplina' : 'Cadastrar Nova Disciplina'}</FormTitle>
 
       {!hasTurmas && (
@@ -64,33 +81,32 @@ const FormDisciplinas = () => {
 
       <fieldset disabled={!hasTurmas}>
         <InputForm
-          onChange={(e) => setNome(e.target.value)}
-          value={nome}
+          {...register('nome')}
           label={'Nome da disciplina'}
           placeholder={"Digite o nome da disciplina"}
           type={"text"}
         />
+        {errors.nome && <FormWarning>{errors.nome.message}</FormWarning>}
         <InputForm
-          onChange={(e) => setCodigo(e.target.value)}
-          value={codigo}
+          {...register('codigo')}
           label={'Código'}
           placeholder={"Digite o código da disciplina"}
           type={"text"}
         />
+        {errors.codigo && <FormWarning>{errors.codigo.message}</FormWarning>}
         <InputForm
-          onChange={(e) => setCargaHoraria(e.target.value)}
-          value={cargaHoraria}
+          {...register('cargaHoraria')}         
           label={'Carga Horária (CH)'}
           placeholder={"Digite a carga Horária"}
           type={"number"}
         />
+        {errors.cargaHoraria && <FormWarning>{errors.cargaHoraria.message}</FormWarning>}
 
         <div className="form-group">
           <label htmlFor="turma">Turma</label>
           <select
             id="turma"
-            value={turma}
-            onChange={(e) => setTurma(e.target.value)}
+            {...register('turma')}
             required
           >
             <option value="" disabled>Selecione uma turma</option>
@@ -100,6 +116,7 @@ const FormDisciplinas = () => {
               </option>
             ))}
           </select>
+          {errors.turma && <FormWarning>{errors.turma.message}</FormWarning>}
         </div>
 
         <ButtonContainer>

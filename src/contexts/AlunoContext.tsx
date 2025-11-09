@@ -37,6 +37,10 @@ export function AlunoContextProvider ({children}:{children:React.ReactNode}){
     },[state])
     
     const adicionarAluno =(alunoData:Omit<Aluno, 'id'>)=>{
+      const matriculaExists = state.alunos.find(aluno=> aluno.matricula === alunoData.matricula);
+      if(matriculaExists){
+        throw new Error('O campo matricula deve ser unico para cada aluno. Verifique as informações')
+      }
         dispatch({
             type: 'AddAluno',
             payload: alunoData
@@ -51,6 +55,10 @@ export function AlunoContextProvider ({children}:{children:React.ReactNode}){
     }
 
     const editarAluno = (alunoAtualizado: Aluno)=>{
+      const matriculaExists = state.alunos.find(aluno => aluno.matricula === alunoAtualizado.matricula && aluno.id !== alunoAtualizado.id)  ;
+      if (matriculaExists) {
+        throw new Error('O campo matricula deve ser unico para cada aluno. Verifique as informações')
+      }
         dispatch({
             type:'EditAluno',
             payload: alunoAtualizado
