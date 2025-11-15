@@ -1,19 +1,36 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import InputForm from "../../components/InputForm"
 import Button from "../../components/Button"
 import { useNavigate, useParams } from "react-router-dom"
 import { useProfessores } from "../../contexts/ProfessorContext"
 import type { Professor } from "../../types"
 import { useTurmas } from "../../contexts/TurmaContext"
-
-
 import { FormContainer, FormTitle, FormWarning, ButtonContainer } from "../../styles/formstyles"
+import z from "zod"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+
+const professorFormSchema = z.object({
+  nome: z.string().min(2, 'O nome do professor deve ter no minimo 2 caracteres'),
+  matricula: z.string().min(2, 'A matricula do professor deve ter no minimo 2 caracteres'),
+  area: z.string().min(3,'A area de ensino do professor deve ter no minimo 3 caracteres'),
+  turma: z.string().min(1, 'O professor deve ter pelo menos uma turma vinculada')
+})
+
+type professorData = z.infer<typeof professorFormSchema>;
+
 
 const FormProfessor = () => {
-  const [nome, setNome] = useState('');
-  const [matricula, setMatricula] = useState('');
-  const [area, setArea] = useState('');
-  const [turma, setTurma] = useState('');
+
+  const {register, handleSubmit, formState:{errors}, reset, setError} = useForm<professorData>({
+    resolver: zodResolver(professorFormSchema),
+    defaultValues: {
+      nome:'',
+      matricula:'',
+      area:'',
+      turma:''
+    }
+  });
 
   const { state: TurmaState } = useTurmas();
   const { state, adicionarProfessor, editProfessor } = useProfessores();
@@ -25,28 +42,29 @@ const FormProfessor = () => {
 
   useEffect(() => {
     if (professorToEdit) {
-      setMatricula(professorToEdit.matricula);
-      setNome(professorToEdit.nome);
-      setArea(professorToEdit.area);
-      setTurma(professorToEdit.turma);
+        reset(professorToEdit)
     }
-  }, [professorToEdit]);
+  }, [professorToEdit, reset]);
 
-  const handleSubmitProfessor = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (professorId && isProfessor) {
-      const profAtualizado: Professor = {
-        id: Number(professorId),
-        area: area,
-        matricula: matricula,
-        nome: nome,
-        turma: turma
-      };
-      editProfessor(profAtualizado);
-    } else {
-      adicionarProfessor({ nome, area, matricula, turma });
+  const handleSubmitProfessor = (data: professorData) => {
+    try{
+      if (professorId && isProfessor) {
+        const profAtualizado: Professor = {
+          id: Number(professorId), ...data
+        };
+        editProfessor(profAtualizado);
+      } else {
+        adicionarProfessor(data);
+      }
+      navigate('/professores/');
+    }catch(error:any){
+      if(error.message.includes('matricula')){
+        setError('matricula', {type:'manual', message: error.message})
+      }else{
+        console.error('Opa, algo deu errado', error)
+      }
     }
-    navigate('/professores/');
+
   };
 
   const handleCancelFormProf = () => {
@@ -54,8 +72,8 @@ const FormProfessor = () => {
   };
 
   return (
-    // 2. Substitui as tags e classes pelos componentes estilizados
-    <FormContainer onSubmit={handleSubmitProfessor}>
+
+    <FormContainer onSubmit={handleSubmit(handleSubmitProfessor)}>
       <FormTitle>{isProfessor ? 'Editar Professor' : 'Cadastrar Novo Professor'}</FormTitle>
 
       {!hasTurmas && (
@@ -66,34 +84,32 @@ const FormProfessor = () => {
 
       <fieldset disabled={!hasTurmas}>
         <InputForm
-          onChange={(e) => setMatricula(e.target.value)}
-          value={matricula}
+          {...register('matricula')}
           label={'Matrícula'}
           placeholder={"Digite a matrícula do Professor"}
           type={"text"}
         />
+        {errors.matricula && <FormWarning>{errors.matricula.message}</FormWarning>}
         <InputForm
-          onChange={(e) => setNome(e.target.value)}
-          value={nome}
-          label={'Nome do Professor'}
+          {...register('nome')}
+          label={'Nome do professor'}
           placeholder={"Digite o nome do Professor"}
           type={"text"}
         />
+        {errors.nome && <FormWarning>{errors.nome.message}</FormWarning>}
         <InputForm
-          onChange={(e) => setArea(e.target.value)}
-          value={area}
+          {...register('area')}
           label={'Área de Ensino'}
           placeholder={"Digite a área do Professor"}
           type={"text"}
         />
+        {errors.area && <FormWarning>{errors.area.message}</FormWarning>}
 
         <div className="form-group">
           <label htmlFor="turma">Turma</label>
           <select
             id="turma"
-            value={turma}
-            onChange={(e) => setTurma(e.target.value)}
-            required
+            {...register('turma')}
           >
             <option value="" disabled>Selecione uma turma</option>
             {TurmaState.turmas.map(turmaItem => (
@@ -102,6 +118,7 @@ const FormProfessor = () => {
               </option>
             ))}
           </select>
+          {errors.turma && <FormWarning>{errors.turma.message}</FormWarning>}
         </div>
 
         <ButtonContainer>

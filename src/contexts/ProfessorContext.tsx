@@ -39,6 +39,10 @@ export const ProfessorContextProvider = ({ children }: { children: React.ReactNo
 
 
     const adicionarProfessor = (profData: Omit<Professor, 'id'>) => {
+        const matriculaExists = state.professores.find(prof=> prof.matricula === profData.matricula);
+        if(matriculaExists){
+            throw new Error('Essa matricula já esta vinculada a um professor. Verifique as informações!')
+        }
         dispatch({ type: 'AdicionarProfessor', payload: profData });
     };
 
@@ -47,6 +51,12 @@ export const ProfessorContextProvider = ({ children }: { children: React.ReactNo
     };
 
     const editProfessor = (profDataAtualizado: Professor) => {
+        const matriculaExists = state.professores.find(prof => 
+            prof.matricula === profDataAtualizado.matricula && prof.id !== profDataAtualizado.id
+        );
+        if (matriculaExists) {
+            throw new Error('Essa matricula já esta vinculada a um professor. Verifique as informações!')
+        }
         dispatch({ type: 'EditarProfessor', payload: profDataAtualizado });
     };
     return (

@@ -41,6 +41,10 @@ export const TurmaContextProvider = ({ children}:{ children: React.ReactNode })=
     },[state])
 
     const addTurma=(turmaData: Omit<Turma, 'id'>) => {
+        const codigoExist = state.turmas.find(turma=> turma.codigo === turmaData.codigo)
+        if(codigoExist){
+            throw new Error('Já existe um codigo como esse sendo utilizado. Crie um codigo unico para cada turma')
+        }
         dispatch({
             type: 'AddTurma',
             payload: turmaData
@@ -55,6 +59,10 @@ export const TurmaContextProvider = ({ children}:{ children: React.ReactNode })=
     }
 
     const editTurma = (turmaAtualizado: Turma) => {
+        const codigoExist = state.turmas.find(turma => turma.codigo === turmaAtualizado.codigo && turma.id !== turmaAtualizado.id)
+        if (codigoExist) {
+            throw new Error('Já existe um codigo como esse sendo utilizado. Crie um codigo unico para cada turma')
+        }
         dispatch({
             type: 'EditTurma',
             payload: turmaAtualizado
